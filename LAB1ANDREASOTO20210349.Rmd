@@ -2,7 +2,7 @@
 title: "Lab1 DW AS"
 author: "Andrea Soto"
 date: "2024-08-05"
-output: rmarkdown :: github_document
+output: rmarkdown::github_document
 ---
 
 ```{r}
