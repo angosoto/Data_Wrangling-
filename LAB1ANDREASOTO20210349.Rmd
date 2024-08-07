@@ -5,14 +5,15 @@ date: "2024-08-05"
 output: rmarkdown::github_document
 ---
 
-```{r}
+```{r, cache=TRUE}
 library(readxl)
 library(openxlsx)
 library(dplyr)
 library(tidyverse)
+library(modeest)
 ##Importar todos los datos de excel 
 ##Definir la unicación del archivo 
-setwd("C:\\Users\\Andrea Soto Gonzalez\\Desktop\\PROGRAMAS DE DATA\\Lab1")
+#setwd("C:\\Users\\Andrea Soto Gonzalez\\Desktop\\PROGRAMAS DE DATA\\Lab1")
 
  
 ##leer todos los archivos de excel dentro de la carpeta que contengan al final -2023
@@ -40,20 +41,7 @@ headers = read_xlsx(files[1], n_max = 0) %>% names()
 #Se asignan al nuevo dataframe 
 colnames(TABLA_COMBINADA) <- c(headers,"Fecha del archivo")
 
-#Calculamos la moda de mis vectores de interés 
-#incorporamos los paqueres y libreria necesaria, donde tenemos la función Mode dentro de los paquetes 
-install.packages("modeest")
-library(modeest)
-MODCOL = TABLA_COMBINADA %>% select(
-  PILOTO,
-  UBICACION,
-  UNIDAD
-)
-# Calcular la moda 
-moda <- function(v) {
-  uniqv <- unique(v)
-  uniqv[which.max(tabulate(match(v, uniqv)))]
-}
+
 
 # Lista de vectores 
 lista_vectores <- list(
@@ -61,6 +49,12 @@ lista_vectores <- list(
   c(6, 6, 9, 8, 7, 6),
   c(90, 1, 1, 1, 10, 11)
 )
+
+moda <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
 
 # Moda por vectores 
 modas <- lapply(lista_vectores, moda)
@@ -74,19 +68,18 @@ modas
 print(head(TABLA_COMBINADA))
 
 # Imprimir el data frame con las modas 
-print(DFMODAS)
+
 
 ##Se guaran los registros en un archivo de excel 
-write.xlsx(TABLA_COMBINADA10, "Tabla_combinada_10.xlsx", rownames = FALSE )
 
 
 ```
 
 
-```{r}
+```{r, cache=TRUE}
 ## EJERCICIO 3
-data <- read_delim("C:\\Users\\Andrea Soto Gonzalez\\Desktop\\PROGRAMAS DE DATA\\INE_PARQUE_VEHICULAR_080219.txt", delim = "|")
-
-head(data)
+data <- read_delim("C://Users//Andrea Soto Gonzalez//Desktop/DATA WRANLING//INE_PARQUE_VEHICULAR_080219.txt", delim = "|")
+ 
+ head(data)
 ```
 
