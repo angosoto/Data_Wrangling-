@@ -1,0 +1,145 @@
+---
+title: "Laboratorio 3"
+author: "Andrea Soto"
+date: "2024-09-08"
+output: html_document
+---
+
+```{r }
+library(dplyr)
+library(readr)
+library(tidyverse)
+
+actors <- read_csv("actors.csv")
+directors_genres <- read_csv("directors_genres.csv")
+directors <- read_csv("directors.csv")
+movies_directors <- read_csv("movies_directors.csv")
+movies_genres <- read_csv("movies_genres.csv")
+movies <- read_csv("movies.csv")
+roles <- read_csv("roles.csv")
+
+
+#Información general sobre la base de datos:
+##  a.	¿Cuántas películas existen en la base de datos? 
+
+num_peliculas <- movies %>% summarise(Total_Peliculas = n_distinct(id))
+print(num_peliculas)
+
+##  b.	¿Cuántos directores?
+num_directores <- directors %>% summarise(Total_Directores = n_distinct(id))
+print(num_directores)
+  
+```
+```{r}
+#Número promedio de géneros por director 
+promedio_generos_por_director <- directors_genres %>%
+  group_by(director_id) %>%
+  summarise(num_generes = n_distinct(genre)) %>%
+  summarise(promedio_generos_por_director = mean(num_generes))
+
+promedio_generos_por_director
+
+```
+
+
+```{r}
+#3.Reporte por “Role” que contiene : Número de películas, Número de actores , Número de actrices, Número de directores
+conteo_peliculas <- movies_directors %>% summarise(num_peliculas= n_distinct(movie_id))
+conteo_directores <- movies_directors %>% summarise(num_directores = n_distinct(director_id))
+
+
+Conteo_ACT <- actors %>% 
+  group_by(gender) %>%
+  summarise(Conteo = n_distinct(id))
+
+conteo_actores <- Conteo_ACT %>% filter(gender == "M") %>% pull(Conteo)
+conteo_actrices <- Conteo_ACT %>% filter(gender == "F") %>% pull(Conteo)
+
+# Crear el reporte
+Reporte <- tibble(
+  Número_Peliculas = conteo_peliculas$num_peliculas,
+  Número_directores = conteo_directores$num_directores, 
+  Número_actores = conteo_actores,
+  Número_actrices = conteo_actrices
+)
+
+
+print(Reporte)
+
+
+```
+
+```{r}
+#4.Reporte con la siguiente información: Información del director (ID, nombre, apellido),Número de películas que ha dirigido,Número de actores con los que ha trabajado,Género más común de sus películas
+
+Informacion_directores <- directors %>%
+  left_join(movies_directors, by = c("id" = "director_id")) %>%
+  left_join(directors_genres, by = c("id" = "director_id"))
+
+
+peliculas_por_director <- Informacion_directores %>%
+  group_by(id, first_name, last_name) %>%
+  summarise(Numero_Peliculas = n_distinct(movie_id))
+
+actores_por_director <- Informacion_directores %>%
+  left_join(roles, by = "movie_id") %>%
+  group_by(id, first_name, last_name) %>%
+  summarise(Numero_Actores = n_distinct(actor_id))
+
+genero_mas_comun <- Informacion_directores %>%
+  group_by(id, first_name, last_name, genre) %>%
+  summarise(Conteo = n()) %>%
+  arrange(desc(Conteo)) %>%
+  slice(1) %>%
+  select(id, first_name, last_name, genre)
+
+Reporte_final <- peliculas_por_director %>%
+  left_join(actores_por_director, by = c("id", "first_name", "last_name")) %>%
+  left_join(genero_mas_comun, by = c("id", "first_name", "last_name"))
+
+print(head(Reporte_final, 10))
+
+```
+
+
+```{r}
+#5.	Encuentre la distribución de “Roles” por las siguientes dimensiones:Película, Director
+
+## distribución de roles por Película
+
+roles_por_pelicula <- roles %>%
+  group_by(movie_id) %>%
+  summarise(n_roles = n())
+
+
+distribucion_peliculas <- roles_por_pelicula %>%
+  group_by(n_roles) %>%
+  summarise(n_movies = n()) %>%  
+  arrange(n_roles)
+
+
+print(head(distribucion_peliculas,10))
+
+#Distribución de roles por Director
+
+
+roles_por_director <- roles %>%
+  left_join(movies_directors, by = "movie_id") %>%  
+  left_join(directors, by = c("director_id" = "id")) %>%  
+  group_by(director_id, first_name, last_name) %>% 
+  summarise(n_roles = n()) %>%  
+  arrange(desc(n_roles))  
+
+
+
+distribucion_directores <- roles_por_director %>%
+  group_by(n_roles) %>%
+  summarise(n_directors = n()) %>%
+  arrange(n_roles)
+
+
+print(head(distribucion_directores,10))
+
+
+```
+
