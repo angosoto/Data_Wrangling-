@@ -1,0 +1,168 @@
+---
+title: "Laboratorio 4"
+author: "Andrea Soto"
+date: "2024-09-08"
+output: html_document
+---
+
+```{r}
+
+
+library(dplyr)
+library(readr)
+library(tidyverse)
+
+tabla_completa <- read_csv("tabla_completa.csv")
+
+```
+
+```{r}
+head(tabla_completa)
+summary(tabla_completa)
+
+```
+```{r}
+
+tabla_completa_filtrada <- tabla_completa %>%
+  filter(!grepl("faltante|DEVOLUCION", CLIENTE, ignore.case = TRUE))
+
+
+# Análisis de los clientes más importantes
+clientes_importantes <- tabla_completa_filtrada %>%
+  group_by(CLIENTE) %>%
+  summarise(Ingreso_por_cliente = sum(Q)) %>%
+  arrange(desc(Ingreso_por_cliente))  # Ordena los clientes de mayor a menor ingreso
+
+# Porcentaje de ventas por cliente
+clientes_importantes <- clientes_importantes %>%
+  mutate(Porcentaje_cliente = cumsum(Ingreso_por_cliente) / sum(Ingreso_por_cliente) * 100)
+
+# Filtrado de clientes importantes
+clientes_20 <- clientes_importantes %>%
+  filter(Porcentaje_cliente <= 80)  # Filtra los clientes que representan hasta el 80% del total de ingresos
+
+# Calcular el número total de clientes
+total_clientes <- nrow(clientes_importantes)
+
+# Calcular el porcentaje de clientes que representan el 80% de los ingresos
+porcentaje_clientes <- nrow(clientes_20) / total_clientes * 100
+
+# Imprimir el porcentaje de clientes que representan el 80% de los ingresos
+print(porcentaje_clientes)
+
+# Imprimir los primeros 10 clientes importantes
+print(head(clientes_20, 10))
+
+
+
+```
+```{r}
+# Análisis de los pilotos más importantes por cantidad de ubicaciones
+pilotos_importantes <- tabla_completa %>% 
+  group_by(PILOTO) %>%  
+  summarise(Ubicaciones_por_piloto = n_distinct(UBICACION)) %>%  # Cuenta el número de ubicaciones únicas por piloto
+  arrange(desc(Ubicaciones_por_piloto)) 
+
+## Porcentaje de ubicaciones por piloto
+pilotos_importantes <- pilotos_importantes %>% 
+  mutate(Porcentaje_piloto = cumsum(Ubicaciones_por_piloto) / sum(Ubicaciones_por_piloto) * 100)  # Añade una nueva columna que calcula el porcentaje acumulado de ubicaciones por piloto respecto al total
+
+## Filtrado de pilotos importantes
+pilotos_20 <- pilotos_importantes %>%
+  filter(Porcentaje_piloto <= 80)  # Filtra los pilotos que representan hasta el 80% del total de ubicaciones
+
+## Calcular el número total de pilotos
+total_pilotos <- nrow(pilotos_importantes)
+
+## Calcular el porcentaje de pilotos que representan el 80% de las ubicaciones
+porcentaje_pilotos <- nrow(pilotos_20) / total_pilotos * 100
+
+## Imprimir el porcentaje de pilotos que representan el 80% de las ubicaciones
+print(porcentaje_pilotos)
+
+## Imprimir los primeros 10 pilotos importantes
+print(pilotos_20)
+
+
+
+```
+
+
+```{r}
+#Vehículos más eficientes por cantidad transportada 
+transporte_efectivo <- tabla_completa %>%
+  group_by(UNIDAD) %>%
+  summarise(CANTIDAD_POR_TRANSPORTE = sum(CANTIDAD)) %>%
+  arrange(desc(CANTIDAD_POR_TRANSPORTE))
+
+print(transporte_efectivo)
+```
+```{r}
+# Flujo de caja mensual
+flujo_de_caja_mensual <- tabla_completa %>%
+  group_by(MES) %>%
+  summarise(Ingreso_por_mes = sum(Q))
+
+# Gráfica para el flujo mensual
+ggplot(flujo_de_caja_mensual, aes(x = MES, y = Ingreso_por_mes)) +
+  geom_line(group = 1) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Flujo de caja mensual", x = "Mes", y = "Ingreso")
+
+
+
+```
+```{r}
+# Clientes que más compran en cada mes
+clientes_por_mes <- tabla_completa %>%
+  group_by(MES, CLIENTE) %>%
+  summarise(Ingreso_por_cliente = sum(Q)) %>%
+  arrange(MES, desc(Ingreso_por_cliente))
+
+# Mostrar los clientes que más compran en cada mes
+clientes_top_por_mes <- clientes_por_mes %>%
+  group_by(MES) %>%
+  top_n(1, Ingreso_por_cliente)
+
+print(clientes_top_por_mes)
+
+```
+
+
+
+
+```{r}
+#Detección de irregularidades 
+cantidad_transportada_por_piloto <- tabla_completa %>%
+  group_by(PILOTO) %>%
+  summarise(Promedio_Q = mean(Q)) 
+PILOTOS_en_sospecha <- cantidad_transportada_por_piloto %>%
+  filter(Promedio_Q > mean(Promedio_Q) + 2*sd(Promedio_Q))
+
+print(PILOTOS_en_sospecha)
+```
+
+
+```{r}
+#tarifas asociadas directamente a clientes y verificar su aceptación 
+tarifas_aceptables <- tabla_completa %>%
+  group_by(CLIENTE) %>%
+  summarise(Promedio_credito = mean(CREDITO))
+
+print(head(tarifas_aceptables))
+
+```
+
+```{r}
+
+#Promedio y unidades demandadas 
+unidades_demandadas <- tabla_completa %>%
+  group_by(CLIENTE) %>%
+  summarise(Cantidad_total = sum(CANTIDAD)) %>%
+  arrange(desc(Cantidad_total))
+
+print(head(unidades_demandadas),10)
+
+```
+
+
