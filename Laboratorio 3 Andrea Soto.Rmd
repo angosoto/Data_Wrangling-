@@ -2,7 +2,7 @@
 title: "Laboratorio 3"
 author: "Andrea Soto"
 date: "2024-09-08"
-output: github_document
+output: rmarkdown:: github_document
 
 ---
 
