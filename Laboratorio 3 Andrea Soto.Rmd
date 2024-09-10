@@ -11,13 +11,14 @@ library(dplyr)
 library(readr)
 library(tidyverse)
 
-actors <- read_csv("actors.csv")
-directors_genres <- read_csv("directors_genres.csv")
-directors <- read_csv("directors.csv")
-movies_directors <- read_csv("movies_directors.csv")
-movies_genres <- read_csv("movies_genres.csv")
-movies <- read_csv("movies.csv")
-roles <- read_csv("roles.csv")
+actors <- read_csv("actors.csv", show_col_types = FALSE)
+directors_genres <- read_csv("directors_genres.csv", show_col_types = FALSE)
+directors <- read_csv("directors.csv", show_col_types = FALSE)
+movies_directors <- read_csv("movies_directors.csv", show_col_types = FALSE)
+movies_genres <- read_csv("movies_genres.csv", show_col_types = FALSE)
+movies <- read_csv("movies.csv", show_col_types = FALSE)
+roles <- read_csv("roles.csv", show_col_types = FALSE)
+
 
 
 #Información general sobre la base de datos:
@@ -74,25 +75,27 @@ print(Reporte)
 #4.Reporte con la siguiente información: Información del director (ID, nombre, apellido),Número de películas que ha dirigido,Número de actores con los que ha trabajado,Género más común de sus películas
 
 Informacion_directores <- directors %>%
-  left_join(movies_directors, by = c("id" = "director_id")) %>%
-  left_join(directors_genres, by = c("id" = "director_id"))
+  left_join(movies_directors, by = c("id" = "director_id"),relationship = "many-to-many") %>%
+  left_join(directors_genres, by = c("id" = "director_id"),relationship = "many-to-many")
 
 
 peliculas_por_director <- Informacion_directores %>%
   group_by(id, first_name, last_name) %>%
-  summarise(Numero_Peliculas = n_distinct(movie_id))
+  summarise(Numero_Peliculas = n_distinct(movie_id), .groups = 'drop')
+
 
 actores_por_director <- Informacion_directores %>%
-  left_join(roles, by = "movie_id") %>%
+  left_join(roles, by = "movie_id", relationship = "many-to-many") %>%
   group_by(id, first_name, last_name) %>%
-  summarise(Numero_Actores = n_distinct(actor_id))
+  summarise(Numero_Actores = n_distinct(actor_id), .groups = 'drop')
 
 genero_mas_comun <- Informacion_directores %>%
   group_by(id, first_name, last_name, genre) %>%
-  summarise(Conteo = n()) %>%
+  summarise(Conteo = n(), .groups = 'drop_last') %>%
   arrange(desc(Conteo)) %>%
   slice(1) %>%
   select(id, first_name, last_name, genre)
+
 
 Reporte_final <- peliculas_por_director %>%
   left_join(actores_por_director, by = c("id", "first_name", "last_name")) %>%
@@ -125,11 +128,12 @@ print(head(distribucion_peliculas,10))
 
 
 roles_por_director <- roles %>%
-  left_join(movies_directors, by = "movie_id") %>%  
+  left_join(movies_directors, by = "movie_id", relationship = "many-to-many") %>%  
   left_join(directors, by = c("director_id" = "id")) %>%  
   group_by(director_id, first_name, last_name) %>% 
-  summarise(n_roles = n()) %>%  
-  arrange(desc(n_roles))  
+  summarise(n_roles = n(), .groups = 'drop') %>%  
+  arrange(desc(n_roles))
+
 
 
 
